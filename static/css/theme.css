@@ -1,0 +1,16 @@
+.table-group-header {
+  background-color: var(--bs-secondary-bg);
+}
+
+.team-row .form-control,
+.team-row .form-select {
+  min-width: 0;
+}
+
+main {
+  max-width: 1200px;
+}
+
+.badge {
+  font-size: 0.85em;
+}

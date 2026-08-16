@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Club Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand navbar-dark bg-dark px-3 mb-3">
+      <span class="navbar-brand mb-0 h1">Club Dashboard</span>
+      <ul class="nav nav-pills">
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-view-nav="active-teams">Active Teams</a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-view-nav="world-skills">World Skills</a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-view-nav="awards">Awards</a>
+        </li>
+      </ul>
+    </nav>
+
+    <main class="container-fluid px-3 pb-4">
+      <section data-view-section="active-teams" class="d-none">
+        <h4>Active Teams</h4>
+        <div id="active-teams-alerts"></div>
+        <p id="active-teams-empty" class="text-muted d-none">
+          No teams configured yet.
+        </p>
+        <p id="active-teams-none-today" class="text-muted d-none">
+          No tracked teams are active at an event today.
+        </p>
+        <div id="active-teams-iq"></div>
+        <div id="active-teams-v5"></div>
+      </section>
+
+      <section data-view-section="world-skills" class="d-none">
+        <h4>World Skills</h4>
+        <div id="world-skills-alerts"></div>
+        <p id="world-skills-empty" class="text-muted d-none">
+          No teams or event region configured yet.
+        </p>
+        <div id="world-skills-groups"></div>
+      </section>
+
+      <section data-view-section="awards" class="d-none">
+        <h4>Awards</h4>
+        <div id="awards-alerts"></div>
+        <p id="awards-empty" class="text-muted d-none">
+          No teams configured yet.
+        </p>
+        <div id="awards-tables"></div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>

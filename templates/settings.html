@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings — Club Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand navbar-dark bg-dark px-3 mb-3">
+      <span class="navbar-brand mb-0 h1">Club Dashboard — Settings</span>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm">Log Out</a>
+    </nav>
+
+    <main class="container-fluid px-3 pb-4" style="max-width: 900px;">
+      {% if saved %}
+        <div class="alert alert-success" role="alert">Settings saved.</div>
+      {% endif %}
+
+      <form method="post" id="settings-form">
+        <div class="mb-3">
+          <label for="api_token" class="form-label">VEX Events API Token</label>
+          <input
+            type="password"
+            class="form-control"
+            id="api_token"
+            name="api_token"
+            autocomplete="off"
+            value="{{ settings.apiToken }}"
+          />
+          <div class="form-text">
+            Generate a token from your events.vex.com account (Developer / API settings). Save
+            before loading seasons below with a new token.
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="event_region" class="form-label">Event Region</label>
+            <select class="form-select" id="event_region" name="event_region"></select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="viqrc_season" class="form-label">VIQRC Season</label>
+            <select class="form-select" id="viqrc_season" name="viqrc_season" data-program="VIQRC">
+              <option value="">Select a season...</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="v5rc_season" class="form-label">V5RC Season</label>
+            <select class="form-select" id="v5rc_season" name="v5rc_season" data-program="V5RC">
+              <option value="">Select a season...</option>
+            </select>
+          </div>
+        </div>
+
+        <hr />
+        <h5>Teams</h5>
+        <div id="settings-teams-list" class="mb-2">
+          {% for team in settings.teams %}
+            <div class="row g-2 align-items-center mb-2 team-row">
+              <div class="col-4">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="team_number"
+                  placeholder="Team #"
+                  value="{{ team.number }}"
+                />
+              </div>
+              <div class="col-3">
+                <select class="form-select" name="team_program" data-role="program">
+                  <option value="" {% if not team.program %}selected{% endif %}>Program...</option>
+                  <option value="VIQRC" {% if team.program == "VIQRC" %}selected{% endif %}>VIQRC</option>
+                  <option value="V5RC" {% if team.program == "V5RC" %}selected{% endif %}>V5RC</option>
+                </select>
+              </div>
+              <div class="col-3">
+                <select class="form-select" name="team_grade" data-role="grade" data-selected="{{ team.grade }}"></select>
+              </div>
+              <div class="col-2">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-team-btn">Remove</button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" id="settings-add-team" class="btn btn-outline-secondary btn-sm mb-3">
+          Add Team
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </main>
+
+    <script>
+      window.__SETTINGS__ = {
+        eventRegion: {{ settings.eventRegion | tojson }},
+        viqrcSeason: {{ (settings.viqrcSeason | tojson) if settings.viqrcSeason is not none else "null" }},
+        v5rcSeason: {{ (settings.v5rcSeason | tojson) if settings.v5rcSeason is not none else "null" }},
+      };
+    </script>
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/settings.js') }}"></script>
+  </body>
+</html>

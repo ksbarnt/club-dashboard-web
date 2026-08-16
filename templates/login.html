@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings Login — Club Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+  </head>
+  <body>
+    <div class="container" style="max-width: 360px; margin-top: 10vh;">
+      <h4 class="mb-3">Settings Login</h4>
+      {% if error %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endif %}
+      <form method="post">
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            name="password"
+            autocomplete="current-password"
+            autofocus
+          />
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Log In</button>
+      </form>
+    </div>
+  </body>
+</html>
