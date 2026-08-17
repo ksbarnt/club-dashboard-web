@@ -105,6 +105,33 @@ function populateRegionOptions(selectEl, selectedRegion) {
   });
 }
 
+const REFRESH_SECTION_LABEL = { active_teams: "Active Teams", world_skills: "World Skills", awards: "Awards" };
+
+function describeRefreshResult(result) {
+  if (result.status === "ok") return `updated ${new Date(result.updatedAt).toLocaleString()}`;
+  if (result.status === "skipped") return `skipped (${result.message})`;
+  return `error (${result.message})`;
+}
+
+async function runRefreshNow(button, status, resultsList) {
+  button.disabled = true;
+  status.textContent = "Refreshing...";
+  resultsList.innerHTML = "";
+  try {
+    const resp = await fetch("/settings/refresh", { method: "POST" });
+    const data = await resp.json();
+    status.textContent = "Done.";
+    Object.entries(data).forEach(([key, result]) => {
+      const label = REFRESH_SECTION_LABEL[key] || key;
+      resultsList.appendChild(el("li", { text: `${label}: ${describeRefreshResult(result)}` }));
+    });
+  } catch (err) {
+    status.textContent = "Failed to refresh.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const initial = window.__SETTINGS__ || { eventRegion: "", viqrcSeason: null, v5rcSeason: null };
   const tokenInput = document.getElementById("api_token");
@@ -113,6 +140,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const v5rcSeasonSelect = document.getElementById("v5rc_season");
   const teamsList = document.getElementById("settings-teams-list");
   const addTeamBtn = document.getElementById("settings-add-team");
+  const refreshBtn = document.getElementById("refresh-now-btn");
+  const refreshStatus = document.getElementById("refresh-now-status");
+  const refreshResults = document.getElementById("refresh-now-results");
 
   populateRegionOptions(regionSelect, initial.eventRegion);
   teamsList.querySelectorAll(".team-row").forEach(wireTeamRow);
@@ -120,4 +150,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   populateSeasonOptions(viqrcSeasonSelect, "VIQRC", initial.viqrcSeason, tokenInput.value);
   populateSeasonOptions(v5rcSeasonSelect, "V5RC", initial.v5rcSeason, tokenInput.value);
+
+  refreshBtn.addEventListener("click", () => runRefreshNow(refreshBtn, refreshStatus, refreshResults));
 });

@@ -3,13 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from flask import jsonify
+from flask import current_app, jsonify
 
 from . import api_bp
 from ._common import get_active_settings, require_token
 from .. import db
 from ..services.concurrency import run_parallel
 from ..services.constants import team_sort_key
+from ..services.errors import MissingTokenError
 from ..services.resolve import event_details, resolve_team_id
 from ..services.vex_client import client_for
 
@@ -33,14 +34,22 @@ def _format_event_label(city: Optional[str], start: Optional[str]) -> Optional[s
     return city or date_str
 
 
-@api_bp.route("/awards", methods=["GET"])
-def awards():
+def refresh() -> Optional[Dict[str, Any]]:
+    """Fetch fresh Awards data from VEX and cache it. Returns the payload
+    on success, or ``None`` (after logging) if teams/token aren't
+    configured yet -- callers treat that as a no-op skip, not an error."""
     settings = get_active_settings()
     teams_cfg: List[Dict[str, str]] = settings.get("teams") or []
     if not teams_cfg:
-        return jsonify({"VIQRC": [], "V5RC": [], "warnings": [], "teamsConfigured": False})
+        current_app.logger.info("awards refresh skipped: no teams configured")
+        return None
 
-    token = require_token(settings)
+    try:
+        token = require_token(settings)
+    except MissingTokenError as exc:
+        current_app.logger.info("awards refresh skipped: %s", exc)
+        return None
+
     client = client_for(token)
     season_ids = {"VIQRC": settings.get("viqrcSeason"), "V5RC": settings.get("v5rcSeason")}
 
@@ -115,4 +124,12 @@ def awards():
 
     payload = {"VIQRC": buckets["VIQRC"], "V5RC": buckets["V5RC"], "warnings": warnings, "teamsConfigured": True}
     db.save_cache("awards", payload)
-    return jsonify(payload)
+    return payload
+
+
+@api_bp.route("/awards", methods=["GET"])
+def awards():
+    cached = db.get_cache("awards")
+    if cached is None:
+        return jsonify({"VIQRC": [], "V5RC": [], "warnings": [], "teamsConfigured": False})
+    return jsonify(cached["payload"])

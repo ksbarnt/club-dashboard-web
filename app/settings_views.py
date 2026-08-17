@@ -5,12 +5,22 @@ from __future__ import annotations
 
 from typing import List
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from pyvexevents import VexEventsError
 
 from . import db
+from .api.active_teams import refresh as refresh_active_teams
+from .api.awards import refresh as refresh_awards
+from .api.world_skills import refresh as refresh_world_skills
 from .auth import login_required
 
 settings_bp = Blueprint("settings", __name__)
+
+_REFRESH_FNS = (
+    ("active_teams", refresh_active_teams),
+    ("world_skills", refresh_world_skills),
+    ("awards", refresh_awards),
+)
 
 
 def _parse_teams() -> List[dict]:
@@ -46,3 +56,23 @@ def settings_page():
 
     current = db.get_settings()
     return render_template("settings.html", settings=current, saved=request.args.get("saved") == "1")
+
+
+@settings_bp.route("/settings/refresh", methods=["POST"])
+@login_required
+def refresh_now():
+    """Run all three cache refreshes synchronously and report per-section
+    status, so the Settings page can offer an on-demand "Refresh Now"."""
+    results = {}
+    for name, fn in _REFRESH_FNS:
+        try:
+            payload = fn()
+        except VexEventsError as exc:
+            results[name] = {"status": "error", "message": exc.message}
+            continue
+        if payload is None:
+            results[name] = {"status": "skipped", "message": "Not configured"}
+            continue
+        cached = db.get_cache(name)
+        results[name] = {"status": "ok", "updatedAt": cached["updatedAt"]}
+    return jsonify(results)

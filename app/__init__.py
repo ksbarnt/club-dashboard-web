@@ -24,6 +24,7 @@ def create_app() -> Flask:
     from . import db
     from .api import api_bp, external_bp
     from .auth import auth_bp
+    from .services import scheduler
     from .services.errors import register_error_handlers
     from .settings_views import settings_bp
 
@@ -46,6 +47,8 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(settings_bp)
     register_error_handlers(app)
+
+    scheduler.start(app)
 
     @app.route("/")
     def index():

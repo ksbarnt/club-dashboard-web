@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from flask import jsonify
+from flask import current_app, jsonify
 from pyvexevents import VexEventsNotFoundError
 
 from . import api_bp
@@ -11,6 +11,7 @@ from ._common import get_active_settings, require_token
 from .. import db
 from ..services.concurrency import run_parallel
 from ..services.constants import PROGRAM_TABLE_KEY
+from ..services.errors import MissingTokenError
 from ..services.resolve import resolve_team_id
 from ..services.vex_client import client_for
 
@@ -53,14 +54,22 @@ def _fetch_detail(client, team_id: int, event_id: int) -> Dict[str, Any]:
     }
 
 
-@api_bp.route("/active-teams", methods=["GET"])
-def active_teams():
+def refresh() -> Optional[Dict[str, Any]]:
+    """Fetch fresh Active Teams data from VEX and cache it. Returns the
+    payload on success, or ``None`` (after logging) if teams/token aren't
+    configured yet -- callers treat that as a no-op skip, not an error."""
     settings = get_active_settings()
     teams_cfg: List[Dict[str, str]] = settings.get("teams") or []
     if not teams_cfg:
-        return jsonify({"IQ": [], "V5": [], "warnings": [], "teamsConfigured": False})
+        current_app.logger.info("active-teams refresh skipped: no teams configured")
+        return None
 
-    token = require_token(settings)
+    try:
+        token = require_token(settings)
+    except MissingTokenError as exc:
+        current_app.logger.info("active-teams refresh skipped: %s", exc)
+        return None
+
     client = client_for(token)
 
     today = datetime.now().date().isoformat()
@@ -120,4 +129,12 @@ def active_teams():
 
     payload = {"IQ": _finalize("IQ"), "V5": _finalize("V5"), "warnings": warnings, "teamsConfigured": True}
     db.save_cache("active_teams", payload)
-    return jsonify(payload)
+    return payload
+
+
+@api_bp.route("/active-teams", methods=["GET"])
+def active_teams():
+    cached = db.get_cache("active_teams")
+    if cached is None:
+        return jsonify({"IQ": [], "V5": [], "warnings": [], "teamsConfigured": False})
+    return jsonify(cached["payload"])

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from flask import jsonify
+from flask import current_app, jsonify
 
 from . import api_bp
 from ._common import get_active_settings
@@ -21,21 +21,20 @@ def _world_skills_rankings(client, season_id: int, grade_level: str) -> List[Dic
     return get_or_set(("world_skills", season_id, grade_level), WORLD_SKILLS_TTL, _fetch)
 
 
-@api_bp.route("/world-skills", methods=["GET"])
-def world_skills():
+def refresh() -> Optional[Dict[str, Any]]:
+    """Fetch fresh World Skills data from VEX and cache it. Returns the
+    payload on success, or ``None`` (after logging) if teams/event region
+    aren't configured yet -- callers treat that as a no-op skip."""
     settings = get_active_settings()
     teams_cfg: List[Dict[str, str]] = settings.get("teams") or []
     event_region: str = settings.get("eventRegion") or ""
 
     if not teams_cfg or not event_region:
-        return jsonify(
-            {
-                "groups": [],
-                "eventRegion": event_region,
-                "teamsConfigured": bool(teams_cfg),
-                "eventRegionConfigured": bool(event_region),
-            }
+        current_app.logger.info(
+            "world-skills refresh skipped: %s",
+            "no teams configured" if not teams_cfg else "no event region configured",
         )
+        return None
 
     season_ids = {"VIQRC": settings.get("viqrcSeason"), "V5RC": settings.get("v5rcSeason")}
 
@@ -104,4 +103,14 @@ def world_skills():
         "eventRegionConfigured": True,
     }
     db.save_cache("world_skills", payload)
-    return jsonify(payload)
+    return payload
+
+
+@api_bp.route("/world-skills", methods=["GET"])
+def world_skills():
+    cached = db.get_cache("world_skills")
+    if cached is None:
+        return jsonify(
+            {"groups": [], "eventRegion": "", "teamsConfigured": False, "eventRegionConfigured": False}
+        )
+    return jsonify(cached["payload"])

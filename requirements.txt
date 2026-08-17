@@ -3,3 +3,4 @@ requests
 pyvexevents
 python-dotenv
 gunicorn
+APScheduler

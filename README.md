@@ -35,17 +35,18 @@ Serves on `http://0.0.0.0:5000`. For local HTTP-only testing, set `SESSION_COOKI
 
 ## Run (production)
 
-```bash
-gunicorn -w 2 -b 0.0.0.0:8000 wsgi:application
-```
+Deployment is a single `python run.py` process managed by systemd, behind a reverse proxy (nginx, Caddy) that terminates TLS. Leave `SESSION_COOKIE_SECURE=true` (the default) in production — it requires HTTPS in front of the app.
 
-Put this behind a reverse proxy (nginx, Caddy) that terminates TLS. Leave `SESSION_COOKIE_SECURE=true` (the default) in production — it requires HTTPS in front of the app.
+The background refresh scheduler (see below) assumes a single process — don't run more than one instance against the same `instance/` dir at a time, or the same VEX API calls will fire redundantly from each.
+
+Alternatively, `gunicorn -w 2 -b 0.0.0.0:8000 wsgi:application` still works as a WSGI server, but note the scheduler isn't multi-worker-safe: with more than one worker, each worker runs its own copy of the schedule.
 
 ## Using the dashboard
 
 1. Visit `/settings/login`, sign in with the password you hashed above, and configure the VEX API token, event region, seasons, and tracked teams at `/settings`.
-2. The public dashboard at `/` (Active Teams, World Skills, Awards) reads that configuration server-side and refreshes automatically — no login needed to view it.
-3. Each successful dashboard fetch is cached in SQLite and readable externally:
+2. A background scheduler refreshes each dataset from the VEX Events API automatically, independent of anyone loading a page: Active Teams every 5 minutes, World Skills and Awards once a day. Each also refreshes once immediately on startup. The Settings page has a **Refresh Now** button to trigger all three on demand and see when each last updated.
+3. The public dashboard at `/` (Active Teams, World Skills, Awards) just reads that cached data — no login needed to view it, and no live VEX API call happens on page load.
+4. The same cached data is readable externally:
 
    ```bash
    curl -H "X-API-Key: yourapikey" http://localhost:8000/api/external/active-teams
@@ -53,4 +54,4 @@ Put this behind a reverse proxy (nginx, Caddy) that terminates TLS. Leave `SESSI
    curl -H "X-API-Key: yourapikey" http://localhost:8000/api/external/awards
    ```
 
-   Returns 404 until the corresponding dashboard view has loaded at least once (nothing cached yet), and 401 for a missing/incorrect key.
+   Returns 404 until the corresponding dataset has been refreshed at least once (e.g. Settings isn't configured yet), and 401 for a missing/incorrect key.

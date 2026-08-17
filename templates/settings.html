@@ -18,6 +18,12 @@
         <div class="alert alert-success" role="alert">Settings saved.</div>
       {% endif %}
 
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <button type="button" id="refresh-now-btn" class="btn btn-outline-secondary btn-sm">Refresh Now</button>
+        <span id="refresh-now-status" class="text-muted small"></span>
+      </div>
+      <ul id="refresh-now-results" class="small text-muted mb-3"></ul>
+
       <form method="post" id="settings-form">
         <div class="mb-3">
           <label for="api_token" class="form-label">VEX Events API Token</label>
