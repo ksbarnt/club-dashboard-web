@@ -11,6 +11,7 @@ from pyvexevents import VexEventsError
 from . import db
 from .api.active_teams import refresh as refresh_active_teams
 from .api.awards import refresh as refresh_awards
+from .api.schedule import refresh as refresh_schedule
 from .api.world_skills import refresh as refresh_world_skills
 from .auth import login_required
 
@@ -20,6 +21,7 @@ _REFRESH_FNS = (
     ("active_teams", refresh_active_teams),
     ("world_skills", refresh_world_skills),
     ("awards", refresh_awards),
+    ("schedule", refresh_schedule),
 )
 
 

@@ -32,28 +32,43 @@ def program_id_map(client: VexEventsClient, token: str) -> dict[str, int]:
     return cache.get_or_set(("program_id_map", token), PROGRAM_MAP_TTL, _fetch)
 
 
-def resolve_team_id(
+def resolve_team(
     client: VexEventsClient, token: str, number: str, program_abbr: str
-) -> Optional[int]:
-    """Team number + program abbreviation -> numeric team id, or None."""
+) -> Optional[dict]:
+    """Team number + program abbreviation -> {"id": ..., "name": ...}, or None."""
 
-    def _fetch() -> Optional[int]:
+    def _fetch() -> Optional[dict]:
         program_ids = program_id_map(client, token)
         program_id = program_ids.get(program_abbr)
         programs = [program_id] if program_id is not None else None
         page = client.get_teams(numbers=[number], programs=programs)
-        for team in page.get("data") or []:
+        data = page.get("data") or []
+        match = None
+        for team in data:
             team_program = team.get("program") or {}
             if program_id is not None and team_program.get("id") == program_id:
-                return team["id"]
+                match = team
+                break
             if team_program.get("code") == program_abbr:
-                return team["id"]
-        # No program filter matched (e.g. program_id lookup failed) -- fall
-        # back to the first result for this number, if any.
-        data = page.get("data") or []
-        return data[0]["id"] if data and program_id is None else None
+                match = team
+                break
+        if match is None and data and program_id is None:
+            # No program filter matched (e.g. program_id lookup failed) --
+            # fall back to the first result for this number, if any.
+            match = data[0]
+        if match is None:
+            return None
+        return {"id": match["id"], "name": match.get("team_name")}
 
-    return cache.get_or_set(("team_id", token, number, program_abbr), TEAM_ID_TTL, _fetch)
+    return cache.get_or_set(("team", token, number, program_abbr), TEAM_ID_TTL, _fetch)
+
+
+def resolve_team_id(
+    client: VexEventsClient, token: str, number: str, program_abbr: str
+) -> Optional[int]:
+    """Team number + program abbreviation -> numeric team id, or None."""
+    team = resolve_team(client, token, number, program_abbr)
+    return team["id"] if team else None
 
 
 def event_details(client: VexEventsClient, token: str, event_id: int) -> Optional[dict]:

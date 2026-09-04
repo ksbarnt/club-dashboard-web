@@ -55,12 +55,19 @@ CREATE TABLE IF NOT EXISTS cache_awards (
     payload TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS cache_schedule (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    payload TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 
 _CACHE_TABLES = {
     "active_teams": "cache_active_teams",
     "world_skills": "cache_world_skills",
     "awards": "cache_awards",
+    "schedule": "cache_schedule",
 }
 
 

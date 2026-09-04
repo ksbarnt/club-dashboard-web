@@ -1,11 +1,13 @@
 import * as activeTeams from "./active-teams.js";
 import * as worldSkills from "./world-skills.js";
 import * as awards from "./awards.js";
+import * as schedule from "./schedule.js";
 
 const VIEWS = {
   "active-teams": activeTeams,
   "world-skills": worldSkills,
   awards,
+  schedule,
 };
 
 let currentView = null;

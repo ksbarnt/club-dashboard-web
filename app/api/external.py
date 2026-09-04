@@ -41,3 +41,9 @@ def world_skills():
 @require_api_key
 def awards():
     return _cached_response("awards")
+
+
+@external_bp.route("/schedule", methods=["GET"])
+@require_api_key
+def schedule():
+    return _cached_response("schedule")
