@@ -1,6 +1,6 @@
 import { apiGet } from "./api.js";
 import { showError, showWarnings, clearAlerts, el } from "./ui.js";
-import { programBadgeClass } from "./theme.js";
+import { programBadgeClass, programTableClass } from "./theme.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
 
@@ -22,9 +22,11 @@ function formatDateRange(start, end) {
   return `${startStr} – ${endStr}`;
 }
 
-function renderEvents(container, events) {
+function renderProgram(container, events, programAbbr, label) {
   container.innerHTML = "";
   if (!events || events.length === 0) return;
+
+  container.appendChild(el("h5", { className: "mt-3", text: label }));
 
   events.forEach((group) => {
     const card = el("div", { className: "mb-4" });
@@ -39,13 +41,13 @@ function renderEvents(container, events) {
     );
 
     const table = el("table", { className: "table table-bordered table-sm align-middle mb-0" });
-    const thead = el("thead", {}, [
+    const thead = el("thead", { className: programTableClass(programAbbr) }, [
       el("tr", {}, [el("th", { text: "Team" }), el("th", { text: "Name" })]),
     ]);
     const tbody = el("tbody");
     group.teams.forEach((team) => {
       const badge = el("span", {
-        className: `badge ${programBadgeClass(team.program)}`,
+        className: `badge ${programBadgeClass(programAbbr)}`,
         text: team.number,
       });
       tbody.appendChild(
@@ -61,7 +63,8 @@ function renderEvents(container, events) {
 
 export async function load() {
   const alerts = document.getElementById("schedule-alerts");
-  const container = document.getElementById("schedule-events");
+  const iqContainer = document.getElementById("schedule-iq");
+  const v5Container = document.getElementById("schedule-v5");
   const emptyMsg = document.getElementById("schedule-empty");
   const noneMsg = document.getElementById("schedule-none");
 
@@ -72,15 +75,19 @@ export async function load() {
   try {
     const data = await apiGet("/api/schedule");
     if (!data.teamsConfigured) {
-      container.innerHTML = "";
+      iqContainer.innerHTML = "";
+      v5Container.innerHTML = "";
       emptyMsg.classList.remove("d-none");
       return;
     }
 
-    renderEvents(container, data.events);
+    const iqEvents = data.IQ || [];
+    const v5Events = data.V5 || [];
+    renderProgram(iqContainer, iqEvents, "VIQRC", "VEX IQ Robotics Competition");
+    renderProgram(v5Container, v5Events, "V5RC", "VEX V5 Robotics Competition");
     showWarnings(alerts, data.warnings);
 
-    if (!data.events || data.events.length === 0) noneMsg.classList.remove("d-none");
+    if (iqEvents.length === 0 && v5Events.length === 0) noneMsg.classList.remove("d-none");
   } catch (err) {
     showError(alerts, err.message || "Failed to load schedule.");
   }

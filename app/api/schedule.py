@@ -8,7 +8,7 @@ from . import api_bp
 from ._common import get_active_settings, require_token
 from .. import db
 from ..services.concurrency import run_parallel
-from ..services.constants import team_sort_key
+from ..services.constants import PROGRAM_TABLE_KEY, team_sort_key
 from ..services.errors import MissingTokenError
 from ..services.resolve import resolve_team
 from ..services.vex_client import client_for
@@ -54,7 +54,7 @@ def refresh() -> Optional[Dict[str, Any]]:
 
     events_lists = run_parallel(resolved, _events_for)
 
-    groups: Dict[int, Dict[str, Any]] = {}
+    groups: Dict[Tuple[str, int], Dict[str, Any]] = {}
     for (team_cfg, team), events in zip(resolved, events_lists):
         if team is None:
             warnings.append(f"Team {team_cfg['number']} ({team_cfg['program']}): number not found")
@@ -64,13 +64,14 @@ def refresh() -> Optional[Dict[str, Any]]:
         for event in events:
             event_id = event["id"]
             bucket = groups.setdefault(
-                event_id,
+                (team_cfg["program"], event_id),
                 {
                     "eventId": event_id,
                     "eventName": event.get("name"),
                     "sku": event.get("sku"),
                     "start": event.get("start"),
                     "end": event.get("end"),
+                    "program": team_cfg["program"],
                     "teams": [],
                 },
             )
@@ -83,7 +84,12 @@ def refresh() -> Optional[Dict[str, Any]]:
     for g in event_groups:
         g["teams"].sort(key=lambda t: team_sort_key(t["number"]))
 
-    payload = {"events": event_groups, "warnings": warnings, "teamsConfigured": True}
+    payload: Dict[str, Any] = {key: [] for key in PROGRAM_TABLE_KEY.values()}
+    for g in event_groups:
+        table_key = PROGRAM_TABLE_KEY.get(g["program"])
+        if table_key is not None:
+            payload[table_key].append(g)
+    payload.update({"warnings": warnings, "teamsConfigured": True})
     db.save_cache("schedule", payload)
     return payload
 
@@ -92,5 +98,5 @@ def refresh() -> Optional[Dict[str, Any]]:
 def schedule():
     cached = db.get_cache("schedule")
     if cached is None:
-        return jsonify({"events": [], "warnings": [], "teamsConfigured": False})
+        return jsonify({"IQ": [], "V5": [], "warnings": [], "teamsConfigured": False})
     return jsonify(cached["payload"])
