@@ -1,4 +1,4 @@
-"""Background refresh of the three dashboard caches, independent of any
+"""Background refresh of the dashboard caches, independent of any
 page load. Single-process by design (deployment is systemd running
 ``python run.py``) -- no leader election/locking needed here.
 """

@@ -49,5 +49,5 @@ export function init() {
       activate(navBtn.dataset.viewNav);
     });
   });
-  activate("active-teams");
+  activate("schedule");
 }
