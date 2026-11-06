@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from flask import current_app, jsonify
@@ -54,6 +54,27 @@ def _fetch_detail(client, team_id: int, event_id: int) -> Dict[str, Any]:
     }
 
 
+# How far back to look for events that may still be running today. Leagues
+# are a single event spanning months, so a start-of-today filter misses them.
+_LOOKBACK_DAYS = 365
+
+
+def _is_active_on(event: Dict[str, Any], day: date) -> bool:
+    """True if ``event`` is running on ``day``.
+
+    Leagues list each session date as a key in ``locations``; when there's
+    more than one, only those session days count. Otherwise (single- or
+    multi-day tournaments, which list just their first day) any day within
+    start..end counts."""
+    iso = day.isoformat()
+    session_days = [k for k in (event.get("locations") or {}) if len(k) == 10 and k[4] == "-"]
+    if len(session_days) > 1:
+        return iso in session_days
+    start = (event.get("start") or "")[:10]
+    end = (event.get("end") or "")[:10] or start
+    return bool(start) and start <= iso <= end
+
+
 def refresh() -> Optional[Dict[str, Any]]:
     """Fetch fresh Active Teams data from VEX and cache it. Returns the
     payload on success, or ``None`` (after logging) if teams/token aren't
@@ -72,9 +93,11 @@ def refresh() -> Optional[Dict[str, Any]]:
 
     client = client_for(token)
 
-    today = datetime.now().date().isoformat()
-    start = f"{today}T00:00:00"
-    end = f"{today}T23:59:59"
+    today = datetime.now().date()
+    # The API's start/end filters mean "starts on/after" and "ends on/before",
+    # so filtering by today drops leagues and multi-day events. Fetch a wide
+    # window by start date and decide what's running today locally.
+    window_start = f"{(today - timedelta(days=_LOOKBACK_DAYS)).isoformat()}T00:00:00"
 
     def _resolve(team_cfg: Dict[str, str]) -> Tuple[Dict[str, str], Optional[int]]:
         team_id = resolve_team_id(client, token, team_cfg["number"], team_cfg["program"])
@@ -88,8 +111,8 @@ def refresh() -> Optional[Dict[str, Any]]:
         _, team_id = entry
         if team_id is None:
             return []
-        page = client.get_team_events(team_id, start=start, end=end)
-        return page.get("data") or []
+        page = client.get_team_events(team_id, start=window_start, per_page=250)
+        return [e for e in page.get("data") or [] if _is_active_on(e, today)]
 
     events_lists = run_parallel(resolved, _events_for)
 
