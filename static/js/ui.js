@@ -38,6 +38,17 @@ export function showWarnings(alertContainer, warnings) {
   alertContainer.appendChild(alert);
 }
 
+/** Event name linked to its events.vex.com page, or plain text if no SKU. */
+export function eventLink(text, sku) {
+  if (!sku) return el("span", { text: text || "" });
+  return el("a", {
+    href: `https://events.vex.com/${encodeURIComponent(sku)}.html`,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    text: text || sku,
+  });
+}
+
 export function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs)) {

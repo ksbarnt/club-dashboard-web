@@ -1,5 +1,5 @@
 import { apiGet } from "./api.js";
-import { showError, showWarnings, clearAlerts, el } from "./ui.js";
+import { showError, showWarnings, clearAlerts, el, eventLink } from "./ui.js";
 import { programBadgeClass, programTableClass } from "./theme.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
@@ -40,7 +40,9 @@ function renderProgramTable(container, teams, programAbbr) {
         }
 
         if (!cityCellUsed) {
-          row.appendChild(el("td", { rowSpan: eventGroup.awards.length, text: eventGroup.eventLabel || "" }));
+          row.appendChild(
+            el("td", { rowSpan: eventGroup.awards.length }, eventLink(eventGroup.eventLabel, eventGroup.sku))
+          );
           cityCellUsed = true;
         }
 

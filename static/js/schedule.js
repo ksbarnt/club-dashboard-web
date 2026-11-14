@@ -1,5 +1,5 @@
 import { apiGet } from "./api.js";
-import { showError, showWarnings, clearAlerts, el } from "./ui.js";
+import { showError, showWarnings, clearAlerts, el, eventLink } from "./ui.js";
 import { programBadgeClass, programTableClass } from "./theme.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
@@ -32,7 +32,7 @@ function renderProgram(container, events, programAbbr, label) {
     const card = el("div", { className: "mb-4" });
     card.appendChild(
       el("h6", { className: "mb-1" }, [
-        el("span", { text: group.eventName || "" }),
+        eventLink(group.eventName, group.sku),
         el("span", {
           className: "text-muted ms-2 small fw-normal",
           text: formatDateRange(group.start, group.end),

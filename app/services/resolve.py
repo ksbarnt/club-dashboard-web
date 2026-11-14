@@ -72,7 +72,7 @@ def resolve_team_id(
 
 
 def event_details(client: VexEventsClient, token: str, event_id: int) -> Optional[dict]:
-    """{"city": ..., "start": ...} for an event, or None if not found."""
+    """{"city": ..., "start": ..., "sku": ...} for an event, or None if not found."""
 
     def _fetch() -> Optional[dict]:
         try:
@@ -80,6 +80,6 @@ def event_details(client: VexEventsClient, token: str, event_id: int) -> Optiona
         except VexEventsNotFoundError:
             return None
         location = event.get("location") or {}
-        return {"city": location.get("city"), "start": event.get("start")}
+        return {"city": location.get("city"), "start": event.get("start"), "sku": event.get("sku")}
 
     return cache.get_or_set(("event_details", token, event_id), EVENT_TTL, _fetch)

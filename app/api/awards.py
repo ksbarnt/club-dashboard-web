@@ -106,6 +106,7 @@ def refresh() -> Optional[Dict[str, Any]]:
                 {
                     "eventId": event_id,
                     "eventLabel": _format_event_label(info.get("city"), info.get("start")),
+                    "sku": info.get("sku"),
                     "_start": info.get("start") or "",
                     "awards": [{"title": a.get("title"), "order": a.get("order")} for a in award_list],
                 }

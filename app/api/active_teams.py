@@ -137,7 +137,7 @@ def refresh() -> Optional[Dict[str, Any]]:
             continue
         event_id = event["id"]
         bucket = groups[table_key].setdefault(
-            event_id, {"eventId": event_id, "eventName": event.get("name"), "teams": []}
+            event_id, {"eventId": event_id, "eventName": event.get("name"), "sku": event.get("sku"), "teams": []}
         )
         bucket["teams"].append({"number": team_cfg["number"], **detail})
 

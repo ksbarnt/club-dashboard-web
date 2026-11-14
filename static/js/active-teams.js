@@ -1,5 +1,5 @@
 import { apiGet } from "./api.js";
-import { showError, showWarnings, clearAlerts, el } from "./ui.js";
+import { showError, showWarnings, clearAlerts, el, eventLink } from "./ui.js";
 import { programBadgeClass, programTableClass } from "./theme.js";
 
 export const REFRESH_MS = 5 * 60 * 1000;
@@ -33,11 +33,11 @@ function renderProgramTable(container, groups, programAbbr, label) {
   groups.forEach((group) => {
     tbody.appendChild(
       el("tr", {}, [
-        el("td", {
-          colSpan: 5,
-          className: "table-group-header fw-semibold",
-          text: group.eventName || "",
-        }),
+        el(
+          "td",
+          { colSpan: 5, className: "table-group-header fw-semibold" },
+          eventLink(group.eventName, group.sku)
+        ),
       ])
     );
     group.teams.forEach((team) => {
