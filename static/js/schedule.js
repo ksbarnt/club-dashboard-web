@@ -1,6 +1,7 @@
 import { apiGet } from "./api.js";
 import { showError, showWarnings, clearAlerts, el, eventLink } from "./ui.js";
 import { programBadgeClass, programTableClass } from "./theme.js";
+import { includes as showProgram } from "./program-filter.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
 
@@ -81,8 +82,8 @@ export async function load() {
       return;
     }
 
-    const iqEvents = data.IQ || [];
-    const v5Events = data.V5 || [];
+    const iqEvents = showProgram("VIQRC") ? data.IQ || [] : [];
+    const v5Events = showProgram("V5RC") ? data.V5 || [] : [];
     renderProgram(iqContainer, iqEvents, "VIQRC", "VEX IQ Robotics Competition");
     renderProgram(v5Container, v5Events, "V5RC", "VEX V5 Robotics Competition");
     showWarnings(alerts, data.warnings);

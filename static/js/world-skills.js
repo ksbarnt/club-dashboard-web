@@ -1,6 +1,7 @@
 import { apiGet } from "./api.js";
 import { showError, showWarnings, clearAlerts, el } from "./ui.js";
 import { programBadgeClass, programTableClass } from "./theme.js";
+import { includes as showProgram } from "./program-filter.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
 
@@ -73,7 +74,8 @@ export async function load() {
       return;
     }
 
-    if (!data.groups || data.groups.length === 0) {
+    const groups = (data.groups || []).filter((group) => showProgram(group.program));
+    if (groups.length === 0) {
       container.appendChild(
         el("p", {
           className: "text-muted",
@@ -82,7 +84,7 @@ export async function load() {
       );
       return;
     }
-    data.groups.forEach((group) => renderGroup(container, group, data.eventRegion));
+    groups.forEach((group) => renderGroup(container, group, data.eventRegion));
     showWarnings(alerts, data.warnings);
   } catch (err) {
     showError(alerts, err.message || "Failed to load world skills rankings.");

@@ -1,6 +1,7 @@
 import { apiGet } from "./api.js";
 import { showError, showWarnings, clearAlerts, el, eventLink } from "./ui.js";
 import { programBadgeClass, programTableClass } from "./theme.js";
+import { includes as showProgram } from "./program-filter.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
 
@@ -73,8 +74,8 @@ export async function load() {
       return;
     }
 
-    renderProgramTable(container, data.VIQRC, "VIQRC");
-    renderProgramTable(container, data.V5RC, "V5RC");
+    if (showProgram("VIQRC")) renderProgramTable(container, data.VIQRC, "VIQRC");
+    if (showProgram("V5RC")) renderProgramTable(container, data.V5RC, "V5RC");
     showWarnings(alerts, data.warnings);
   } catch (err) {
     showError(alerts, err.message || "Failed to load awards.");

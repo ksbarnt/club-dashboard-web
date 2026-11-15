@@ -1,6 +1,7 @@
 import { apiGet } from "./api.js";
 import { showError, showWarnings, clearAlerts, el, eventLink } from "./ui.js";
 import { programBadgeClass, programTableClass } from "./theme.js";
+import { includes as showProgram } from "./program-filter.js";
 
 export const REFRESH_MS = 5 * 60 * 1000;
 
@@ -81,12 +82,13 @@ export async function load() {
       return;
     }
 
-    renderProgramTable(iqContainer, data.IQ, "VIQRC", "VEX IQ Robotics Competition");
-    renderProgramTable(v5Container, data.V5, "V5RC", "VEX V5 Robotics Competition");
+    const iqGroups = showProgram("VIQRC") ? data.IQ || [] : [];
+    const v5Groups = showProgram("V5RC") ? data.V5 || [] : [];
+    renderProgramTable(iqContainer, iqGroups, "VIQRC", "VEX IQ Robotics Competition");
+    renderProgramTable(v5Container, v5Groups, "V5RC", "VEX V5 Robotics Competition");
     showWarnings(alerts, data.warnings);
 
-    const hasAny = (data.IQ && data.IQ.length) || (data.V5 && data.V5.length);
-    if (!hasAny) noneToday.classList.remove("d-none");
+    if (iqGroups.length === 0 && v5Groups.length === 0) noneToday.classList.remove("d-none");
   } catch (err) {
     showError(alerts, err.message || "Failed to load active teams.");
   }

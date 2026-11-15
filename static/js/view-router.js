@@ -2,6 +2,7 @@ import * as activeTeams from "./active-teams.js";
 import * as worldSkills from "./world-skills.js";
 import * as awards from "./awards.js";
 import * as schedule from "./schedule.js";
+import * as programFilter from "./program-filter.js";
 
 const VIEWS = {
   "active-teams": activeTeams,
@@ -48,6 +49,9 @@ export function init() {
       event.preventDefault();
       activate(navBtn.dataset.viewNav);
     });
+  });
+  programFilter.init(() => {
+    if (currentView) VIEWS[currentView].load();
   });
   activate("schedule");
 }
