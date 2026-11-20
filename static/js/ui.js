@@ -1,3 +1,5 @@
+import { programBadgeClass } from "./theme.js";
+
 export function clearAlerts(alertContainer) {
   alertContainer.innerHTML = "";
 }
@@ -46,6 +48,19 @@ export function eventLink(text, sku) {
     target: "_blank",
     rel: "noopener noreferrer",
     text: text || sku,
+  });
+}
+
+/** Team number badge linked to its events.vex.com team page. */
+export function teamLink(number, program) {
+  const className = `badge ${programBadgeClass(program)} text-decoration-none`;
+  if (!number || !program) return el("span", { className, text: number || "" });
+  return el("a", {
+    className,
+    href: `https://events.vex.com/teams/${encodeURIComponent(program)}/${encodeURIComponent(number)}`,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    text: number,
   });
 }
 

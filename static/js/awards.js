@@ -1,6 +1,6 @@
 import { apiGet } from "./api.js";
-import { showError, showWarnings, clearAlerts, el, eventLink } from "./ui.js";
-import { programBadgeClass, programTableClass } from "./theme.js";
+import { showError, showWarnings, clearAlerts, el, eventLink, teamLink } from "./ui.js";
+import { programTableClass } from "./theme.js";
 import { includes as showProgram } from "./program-filter.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
@@ -32,10 +32,7 @@ function renderProgramTable(container, teams, programAbbr) {
         const row = el("tr");
 
         if (!teamCellUsed) {
-          const badge = el("span", {
-            className: `badge ${programBadgeClass(programAbbr)}`,
-            text: team.number,
-          });
+          const badge = teamLink(team.number, programAbbr);
           row.appendChild(el("td", { rowSpan: totalAwards }, badge));
           teamCellUsed = true;
         }

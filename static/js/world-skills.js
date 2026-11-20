@@ -1,6 +1,6 @@
 import { apiGet } from "./api.js";
-import { showError, showWarnings, clearAlerts, el } from "./ui.js";
-import { programBadgeClass, programTableClass } from "./theme.js";
+import { showError, showWarnings, clearAlerts, el, teamLink } from "./ui.js";
+import { programTableClass } from "./theme.js";
 import { includes as showProgram } from "./program-filter.js";
 
 export const REFRESH_MS = 24 * 60 * 60 * 1000;
@@ -37,10 +37,7 @@ function renderGroup(container, group, eventRegion) {
   ]);
   const tbody = el("tbody");
   group.teams.forEach((team) => {
-    const badge = el("span", {
-      className: `badge ${programBadgeClass(group.program)}`,
-      text: team.number,
-    });
+    const badge = teamLink(team.number, group.program);
     tbody.appendChild(
       el("tr", {}, [
         el("td", {}, badge),
